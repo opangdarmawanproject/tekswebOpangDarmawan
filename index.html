@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerbang Interaktif - PERMISI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+            margin: 0;
+            overflow: hidden;
+        }
+        .info {
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 0 20px;
+        }
+        #sortable-list {
+            list-style-type: none;
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+            background: #34495e;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin: 0;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90vw;
+        }
+        .letter-box {
+            width: 60px;
+            height: 60px;
+            background-color: #e74c3c;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            transition: background-color 0.3s;
+        }
+        .letter-box:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+        }
+        #success-msg {
+            display: none;
+            margin-top: 20px;
+            font-size: 1.5rem;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="info">
+        Geser dan susun huruf yang berhamburan di bawah ini menjadi:<br>
+        <strong style="font-size: 1.5rem; color: #f1c40f;">PERMISI</strong>
+    </div>
+
+    <ul id="sortable-list">
+        </ul>
+
+    <div id="success-msg">Akses Dibuka! Mengalihkan...</div>
+
+    <script>
+        const targetWord = "PERMISI";
+        const targetUrl = "https://opangdarmawanproject.github.io/OpangDarmawanPage/";
+        
+        // Memecah kata menjadi array huruf
+        let letters = targetWord.split("");
+        
+        // Fungsi untuk mengacak huruf (Fisher-Yates Shuffle)
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Mengacak huruf, pastikan tidak tersusun benar sejak awal
+        do {
+            shuffle(letters);
+        } while (letters.join("") === targetWord);
+
+        const listEl = document.getElementById('sortable-list');
+        const successMsg = document.getElementById('success-msg');
+        
+        // Memasukkan huruf yang sudah diacak ke dalam HTML
+        letters.forEach(char => {
+            let li = document.createElement('li');
+            li.classList.add('letter-box');
+            li.textContent = char;
+            listEl.appendChild(li);
+        });
+
+        // Mengaktifkan fitur geser-geser dengan SortableJS
+        new Sortable(listEl, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: function () {
+                // Mengecek susunan kata setiap kali pengguna selesai menggeser huruf
+                let currentWord = "";
+                document.querySelectorAll('.letter-box').forEach(el => {
+                    currentWord += el.textContent;
+                });
+
+                // Jika kata sudah benar ("PERMISI")
+                if (currentWord === targetWord) {
+                    // Ubah warna kotak menjadi hijau sebagai tanda berhasil
+                    document.querySelectorAll('.letter-box').forEach(el => {
+                        el.style.backgroundColor = '#2ecc71';
+                        el.style.pointerEvents = 'none'; // Kunci agar tidak bisa digeser lagi
+                    });
+                    
+                    successMsg.style.display = 'block';
+
+                    // Redirect ke URL tujuan setelah jeda 1 detik agar animasi terlihat
+                    setTimeout(() => {
+                        window.location.replace(targetUrl);
+                    }, 1000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
