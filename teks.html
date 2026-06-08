@@ -9,17 +9,19 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #ffffff; /* Background putih murni */
+            background-color: #ffffff;
             display: flex;
+            flex-direction: column; /* Mengubah arah agar teks hint ada di bawah */
             align-items: center;
             justify-content: center;
             height: 100vh;
-            overflow: hidden; /* Mencegah munculnya scrollbar di dalam iframe */
+            overflow: hidden;
             font-family: 'Righteous', cursive;
+            user-select: none; /* Mencegah teks ter-block biru saat diklik cepat */
         }
 
         .name-container {
-            font-size: clamp(2rem, 8vw, 6rem); /* Ukuran responsif menyesuaikan kotak iframe */
+            font-size: clamp(2rem, 8vw, 6rem);
             text-align: center;
             display: flex;
             flex-wrap: wrap;
@@ -34,19 +36,30 @@
             display: inline-block;
         }
 
-        .letter:hover {
+        .letter:hover, .letter:active {
             transform: translateY(-8px) scale(1.1);
-            color: #FF007F; /* Pop Pink */
+            color: #FF007F; /* Warna pink saat diklik/hover */
             text-shadow: 3px 3px 0px #000;
+        }
+
+        /* Teks petunjuk kecil */
+        .hint {
+            font-family: sans-serif;
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 15px;
+            transition: opacity 0.5s ease;
         }
     </style>
 </head>
 <body>
 
     <div class="name-container" id="nameText"></div>
+    <div class="hint" id="hintText">(Klik salah satu huruf untuk mengaktifkan suara)</div>
 
     <script>
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioCtx = null;
+        let isAudioUnlocked = false;
         
         // Frekuensi chord gitar (C Major Pentatonic)
         const notes = [
@@ -55,11 +68,21 @@
             523.25, 587.33, 659.25
         ];
 
-        function playGuitarString(frequency) {
-            // Browser policy: audio context harus di-resume setelah interaksi user
+        // Fungsi untuk mengizinkan audio berjalan di browser
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            isAudioUnlocked = true;
+            // Sembunyikan teks hint setelah audio berhasil aktif
+            document.getElementById('hintText').style.opacity = '0'; 
+        }
+
+        function playGuitarString(frequency) {
+            if (!isAudioUnlocked) return; // Cegah error jika browser belum mengizinkan
             
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
@@ -93,12 +116,23 @@
             
             const noteFreq = notes[index % notes.length];
             
-            span.addEventListener('mouseenter', () => playGuitarString(noteFreq));
-            span.addEventListener('touchstart', (e) => {
-                e.preventDefault();
+            // Event Listener 1: Saat diklik (atau disentuh di HP)
+            // Ini akan membuka kunci keamanan browser DAN membunyikan nada
+            span.addEventListener('pointerdown', (e) => {
+                initAudio();
                 playGuitarString(noteFreq);
+                
+                // Beri efek warna sesaat ketika diklik
                 span.style.color = '#FF007F';
                 setTimeout(() => span.style.color = '', 200);
+            });
+
+            // Event Listener 2: Saat kursor lewat (Hover)
+            // Hanya akan berbunyi JIKA sebelumnya pengguna sudah pernah klik minimal 1 kali
+            span.addEventListener('mouseenter', () => {
+                if (isAudioUnlocked) {
+                    playGuitarString(noteFreq);
+                }
             });
             
             nameContainer.appendChild(span);
