@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teks Interaktif Opang</title>
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff; /* Background putih murni */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden; /* Mencegah munculnya scrollbar di dalam iframe */
+            font-family: 'Righteous', cursive;
+        }
+
+        .name-container {
+            font-size: clamp(2rem, 8vw, 6rem); /* Ukuran responsif menyesuaikan kotak iframe */
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2px;
+            color: #000000;
+        }
+
+        .letter {
+            cursor: pointer;
+            transition: transform 0.1s ease, color 0.2s ease;
+            display: inline-block;
+        }
+
+        .letter:hover {
+            transform: translateY(-8px) scale(1.1);
+            color: #FF007F; /* Pop Pink */
+            text-shadow: 3px 3px 0px #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="name-container" id="nameText"></div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Frekuensi chord gitar (C Major Pentatonic)
+        const notes = [
+            130.81, 146.83, 164.81, 196.00, 220.00, 
+            261.63, 293.66, 329.63, 392.00, 440.00, 
+            523.25, 587.33, 659.25
+        ];
+
+        function playGuitarString(frequency) {
+            // Browser policy: audio context harus di-resume setelah interaksi user
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.5);
+        }
+
+        const nameString = "Opang Darmawan";
+        const nameContainer = document.getElementById('nameText');
+        
+        nameString.split('').forEach((char, index) => {
+            if (char === ' ') {
+                const space = document.createElement('span');
+                space.style.width = '20px';
+                nameContainer.appendChild(space);
+                return;
+            }
+            const span = document.createElement('span');
+            span.className = 'letter';
+            span.innerText = char;
+            
+            const noteFreq = notes[index % notes.length];
+            
+            span.addEventListener('mouseenter', () => playGuitarString(noteFreq));
+            span.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                playGuitarString(noteFreq);
+                span.style.color = '#FF007F';
+                setTimeout(() => span.style.color = '', 200);
+            });
+            
+            nameContainer.appendChild(span);
+        });
+    </script>
+</body>
+</html>
